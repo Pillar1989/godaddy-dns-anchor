@@ -45,7 +45,8 @@ FailExec='/bin/echo "$(date): ERROR: DNS update failed for some reason, but most
 # Actually do the work
 Curl=$(which curl 2>/dev/null)
 [ "${Curl}" = "" ] &&
-echo "Error: Unable to find 'curl CLI'." && exit 1[ -z "${Key}" ] || [ -z "${Secret}" ] &&
+echo "Error: Unable to find 'curl CLI'." && exit 1
+[ -z "${Key}" ] || [ -z "${Secret}" ] &&
 echo "Error: Requires API 'Key/Secret' value." && exit 1
 [ -z "${Domain}" ] &&
 echo "Error: Requires 'Domain' value." && exit 1
@@ -58,7 +59,6 @@ echo -n>>${CachedIP} 2>/dev/null
 [ -z "${CheckURL}" ] && CheckURL=http://api.ipify.org
 echo -n "Checking current 'Public IP' from '${CheckURL}'..."
 PublicIP=$(${Curl} -kLs ${CheckURL})
-
 if [ $? -eq 0 ] && [[ "${PublicIP}" =~ [0-9]{1,3}\.[0-9]{1,3} ]];then
   echo "${PublicIP}!"
 else
@@ -66,16 +66,15 @@ else
   eval ${FailedExec}
   exit 1
 fi
-
 if [ "$(cat ${CachedIP} 2>/dev/null)" != "${PublicIP}" ];then
   echo -n "Checking '${Domain}' IP records from 'GoDaddy'..."
   Check=$(${Curl} -kLsH"Authorization: sso-key ${Key}:${Secret}" \
   -H"Content-type: application/json" \
   https://api.godaddy.com/v1/domains/${Domain}/records/${Type}/${Name} \
-  2>/dev/null|sed -r 's/.+data":"(.+)","t.+/\1/g' 2>/dev/null)
+  2>/dev/null|grep -Eo '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' 2>/dev/null)
   if [ $? -eq 0 ] && [ "${Check}" = "${PublicIP}" ];then
     echo -n ${Check}>${CachedIP}
-    echo -e "unchanged!\nCurrent 'Public IP' matches 'GoDaddy' records. No update required!">>../dns-anchor.log
+    echo -e "unchanged!\nCurrent 'Public IP' matches 'GoDaddy' records. No update required!"
   else
     echo -en "changed!\nUpdating '${Domain}'..."
     Update=$(${Curl} -kLsXPUT -H"Authorization: sso-key ${Key}:${Secret}" \
@@ -95,5 +94,4 @@ if [ "$(cat ${CachedIP} 2>/dev/null)" != "${PublicIP}" ];then
 else
   echo "Current 'Public IP' matches 'Cached IP' recorded. No update required!"
 fi
-
 exit $?
