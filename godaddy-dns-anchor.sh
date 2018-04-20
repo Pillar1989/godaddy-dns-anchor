@@ -79,10 +79,10 @@ if [ "$(cat ${CachedIP} 2>/dev/null)" != "${PublicIP}" ];then
   else
     echo -en "changed!\nUpdating '${Domain}'..."
     Update=$(${Curl} -kLsXPUT -H"Authorization: sso-key ${Key}:${Secret}" \
-    -H"Content-type: application/json" \
+    -H"Content-type: application/json" -w "%{http_code}" -o /dev/null \
     https://api.godaddy.com/v1/domains/${Domain}/records/${Type}/${Name} \
     -d "{\"data\":\"${PublicIP}\",\"ttl\":${TTL}}" 2>/dev/null)
-    if [ $? -eq 0 ] && [ "${Update}" = "{}" ];then
+    if [ $? -eq 0 ] && [ "${Update}" = "200" ];then
       echo -n ${PublicIP}>${CachedIP}
       echo "Success!"
       eval ${SuccessExec}
