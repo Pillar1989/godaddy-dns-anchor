@@ -87,7 +87,7 @@ if [ "$(cat ${CachedIP} 2>/dev/null)" != "${PublicIP}" ];then
       echo "Success!"
       eval ${SuccessExec}
     else
-      echo "Fail! ${Update}"
+      echo "Fail! HTTP_ERROR:${Update}"
       eval ${FailedExec}
       exit 1
     fi  
