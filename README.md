@@ -1,3 +1,4 @@
+
 You will need the following docker secrets defined and available to this container:
 
 GODADDY_API_KEY
